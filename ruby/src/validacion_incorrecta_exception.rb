@@ -1,0 +1,1 @@
+class ValidacionIncorrectaException < StandardError; end
