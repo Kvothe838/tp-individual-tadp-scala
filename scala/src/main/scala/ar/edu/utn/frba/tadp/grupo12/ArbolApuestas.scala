@@ -3,7 +3,9 @@ package ar.edu.utn.frba.tadp.grupo12
 import ar.edu.utn.frba.tadp.grupo12.Casino.{Apuestas, probabilidad}
 
 import scala.annotation.tailrec
-
+//Reflexión: quizás no fue tan buena idea implementar un árbol binario para la planificación
+//puesto que no se tiene en consideración la posibilidad de empatar.
+//Una mejor solución es un árbol normal, no binario.
 trait ArbolApuestas[+A]{
   def contar_hojas: Int ={
     @tailrec //optimizacion para el loop

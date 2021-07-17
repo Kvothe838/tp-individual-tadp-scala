@@ -16,6 +16,30 @@ case object Negro extends TipoApuesta
 case object Par extends TipoApuesta
 case object Impar extends TipoApuesta
 case class Numero(valor: Int) extends TipoApuesta
+trait PiedraPapelOTijera{
+  def leGana(piedraPapelOTijera: PiedraPapelOTijera): Option[Boolean]
+}
+case object Piedra extends TipoApuesta with PiedraPapelOTijera {
+  override def leGana(piedraPapelOTijera: PiedraPapelOTijera): Option[Boolean] = piedraPapelOTijera match{
+    case Piedra => None
+    case Papel => Option(false)
+    case Tijera => Option(true)
+  }
+}
+case object Papel extends TipoApuesta with PiedraPapelOTijera {
+  override def leGana(piedraPapelOTijera: PiedraPapelOTijera): Option[Boolean] = piedraPapelOTijera match{
+    case Piedra =>  Option(true)
+    case Papel => None
+    case Tijera =>  Option(false)
+  }
+}
+case object Tijera extends TipoApuesta with PiedraPapelOTijera {
+  override def leGana(piedraPapelOTijera: PiedraPapelOTijera): Option[Boolean] = piedraPapelOTijera match{
+    case Piedra =>  Option(false)
+    case Papel =>  Option(true)
+    case Tijera => None
+  }
+}
 case class Tipo(tipoApuesta: TipoApuesta,tipoDistribucion:TipoDistribucion)
 abstract class TipoDistribucion
 

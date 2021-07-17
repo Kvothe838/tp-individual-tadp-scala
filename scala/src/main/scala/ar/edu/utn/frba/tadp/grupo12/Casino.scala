@@ -6,11 +6,6 @@ object Casino {
   type Apuestas = List[Apuesta]
   type Probabilidad_Monto = (Double,Double)
   type Puntaje = Double
-  //No estoy seguro que que voy a hacer con esto, podría devolver Apuestas.
-//  val combinar: Apuestas => List[Apuestas] = apuestas =>  {
-//    println(s"apuestas.lenght ${apuestas.length}")
-//    apuestas.toSet[Apuesta].subsets.toList
-//  }
 
   def f_max(apuestas:Apuestas, g:List[Apuesta]=>Double):Apuestas = combinar(apuestas).maxBy(apuestas => g(apuestas))
   val prob_ganar: Apuestas => Double = apuestas => apuestas.map(apuesta => probabilidad(apuesta)._1).product
@@ -18,8 +13,6 @@ object Casino {
   def combinar[T](seq: Seq[T]) : List[List[T]] = {
     (1 to seq.length).flatMap(i => seq.combinations(i).flatMap(_.permutations)).toList.map(_.toList).distinct
   }
-
-  def probabilidad_de_conjunto(apuestas: Apuestas):Double = apuestas.map(apuesta => probabilidad(apuesta)._1).product
 
   @tailrec
   def puedo_jugarla(apuestas: List[Apuesta], monto: Double):Boolean={
@@ -51,6 +44,12 @@ object Casino {
       case PrimerDocena | SegundaDocena | TercerDocena => (12.0/37.0, 3)
       case Numero(_) => (1.0/37.0, 36)
       case MonedaCargada(loquequiero, total) => (DistribucionPonderada.probabilidad(loquequiero, total), 2)
+      //Piedra gana solo cuando sale tijera con un 40% de probabilidad
+      case Piedra => (DistribucionPonderada.probabilidad(40, 100), 2)
+      //Papel gana solo cuando sale piedra con un 35% de probabilidad
+      case Papel => (DistribucionPonderada.probabilidad(35, 100), 2)
+      //Tijera gana solo cuando sale papel con un 25% de probabilidad
+      case Tijera => (DistribucionPonderada.probabilidad(25, 100), 2)
     }
   }
 
@@ -60,25 +59,48 @@ object Casino {
   }
 
   // Auxiliar para método evaluar, ayuda a obtener el resultado de la apuesta
-  def sale(tipoApuesta: TipoApuesta): Boolean = {
+  // Si es null, significa que empató. Si es true, ganó, y si es false, perdió.
+  def sale(tipoApuesta: TipoApuesta): Option[Boolean] = {
     tipoApuesta match {
-      case Cara =>  dame_un_random(2) == 0
-      case Cruz =>  dame_un_random(2) == 1
-      case MonedaCargada(loquequiero, total) => List.range(1, loquequiero).contains(dame_un_random(total))
-      case Rojo => List[Int](1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36).contains(dame_un_random(37))
-      case Negro => List[Int](2,4,6,8,10,11,13,15,17,20,22,24,26,28,29,31,33,35).contains(dame_un_random(37))
-      case Par  => dame_un_random(37) % 2 == 0
-      case Impar => dame_un_random(37) % 2 == 1
-      case PrimerDocena => List.range(1,13).contains(dame_un_random(37))
-      case SegundaDocena => List.range(13,25).contains(dame_un_random(37))
-      case TercerDocena => List.range(25,37).contains(dame_un_random(37))
-      case Numero(numero) => numero == dame_un_random(37)
+      case Cara =>  Option(dame_un_random(2) == 0)
+      case Cruz =>  Option(dame_un_random(2) == 1)
+      case MonedaCargada(loquequiero, total) => Option(List.range(1, loquequiero).contains(dame_un_random(total)))
+      case Rojo => Option(List[Int](1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36).contains(dame_un_random(37)))
+      case Negro => Option(List[Int](2,4,6,8,10,11,13,15,17,20,22,24,26,28,29,31,33,35).contains(dame_un_random(37)))
+      case Par  => Option(dame_un_random(37) % 2 == 0)
+      case Impar => Option(dame_un_random(37) % 2 == 1)
+      case PrimerDocena => Option(List.range(1,13).contains(dame_un_random(37)))
+      case SegundaDocena => Option(List.range(13,25).contains(dame_un_random(37)))
+      case TercerDocena => Option(List.range(25,37).contains(dame_un_random(37)))
+      case Numero(numero) => Option(numero == dame_un_random(37))
+      case (piedraPapelOTijera: PiedraPapelOTijera) => piedraPapelOTijera.leGana(sale_piedraPapelOTijera())
     }
   }
 
+  def sale_piedraPapelOTijera(): PiedraPapelOTijera ={
+    var queSale = dame_un_random(100)
+    var piedra = List.range(1, 35)
+    var papel = List(1, 25)
+    //La tijera tiene la probabilidad restante
+
+    if(piedra.contains(queSale)){
+      Piedra
+    } else if(papel.contains(queSale)){
+      Papel
+    } else {
+      Tijera
+    }
+  }
+
+
+
   // Dada una apuesta y un jugador evalúa si este gana la apuesta y paga el monto.
   def evaluar(apuesta:Apuesta, resultado: State): State={
-    if (sale(apuesta.tipo.tipoApuesta)) {
+    val salio = sale(apuesta.tipo.tipoApuesta)
+
+    if (salio.isEmpty) {
+      resultado.gana(apuesta.monto)
+    } else if(salio.get){
       resultado.gana(apuesta.monto * probabilidad(apuesta)._2)
     } else{
       resultado

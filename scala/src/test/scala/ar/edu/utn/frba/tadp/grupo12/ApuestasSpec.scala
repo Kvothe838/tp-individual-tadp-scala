@@ -114,5 +114,73 @@ class ApuestasSpec extends AnyFreeSpec{
 
         assert(resultado.jugador.monto == 110 || resultado.jugador.monto == 90)
     }
+
+    "Jugador apuesta Piedra y juega" in {
+      val bob_esponja = Jugador("Bob Esponja", Perfil.TipoCauto, 100)
+      val apuestas = List[Apuesta](new Apuesta(Tipo(Piedra, DistribucionPonderada),50))
+      val resultado = Casino.jugar(apuestas,bob_esponja)
+      assert(resultado.jugador.monto == 50||resultado.jugador.monto == 100||resultado.jugador.monto == 200)
+    }
+
+    "Jugador apuesta Papel y juega" in {
+      val bob_esponja = Jugador("Bob Esponja", Perfil.TipoCauto, 100)
+      val apuestas = List[Apuesta](new Apuesta(Tipo(Papel, DistribucionPonderada),50))
+      val resultado = Casino.jugar(apuestas,bob_esponja)
+      assert(resultado.jugador.monto == 50||resultado.jugador.monto == 100||resultado.jugador.monto == 200)
+    }
+
+    "Jugador apuesta Tijera y juega" in {
+      val bob_esponja = Jugador("Bob Esponja", Perfil.TipoCauto, 100)
+      val apuestas = List[Apuesta](new Apuesta(Tipo(Tijera, DistribucionPonderada),50))
+      val resultado = Casino.jugar(apuestas,bob_esponja)
+      assert(resultado.jugador.monto == 50||resultado.jugador.monto == 100||resultado.jugador.monto == 200)
+    }
+
+    "Jugador adicto piedra, papel, tijera" in {
+      val criterio : Criterio = (hojas, _) => hojas.length
+      val adicto = Jugador("Juan Adicto", criterio, 15)
+      val apuestas = List[Apuesta](
+        new Apuesta(Tipo(Piedra,DistribucionPonderada),10), // Cara 10
+        new Apuesta(Tipo(Papel,DistribucionPonderada),15), // 0 15
+        new Apuesta(Tipo(Tijera,DistribucionPonderada),15)) // 0 15
+
+      val planificacion = Casino.planificar(adicto,apuestas)
+      assert(planificacion.length == apuestas.length)
+    }
+
+    "Jugador Cauto apuesta cara y piedra" in {
+      val cauto = Jugador("Juan Cauto", Perfil.TipoCauto,15)
+      val apuestas = List[Apuesta](
+        new Apuesta(Tipo(Cara,DistribucionEquiprobable),10),
+        new Apuesta(Tipo(Piedra,DistribucionPonderada),15))
+
+      val planificacion = Casino.planificar(cauto,apuestas)
+      assert(planificacion.length == 1)
+      assert(planificacion.head.tipo.tipoApuesta == Cara)
+    }
+
+    "Jugador Arriesgado apuesta cara y papel" in {
+      val arriesgado = Jugador("Juan Arriesgado", Perfil.TipoArriesgado, 15)
+      val apuestas = List[Apuesta](
+        new Apuesta(Tipo(Cara,DistribucionEquiprobable),10), // Cara 10
+        new Apuesta(Tipo(Papel,DistribucionPonderada),15)) // 0 15
+      val planificacion = Casino.planificar(arriesgado,apuestas)
+
+      assert(planificacion.length == 2)
+      assert(planificacion == apuestas.reverse || planificacion == apuestas)
+    }
+
+    "Jugador racional apuesta Cruz y Tijera" in {
+      val racional = Jugador("Juan Racional", Perfil.TipoRacional,15)
+      val apuestas = List[Apuesta](
+        new Apuesta(Tipo(Cruz,DistribucionEquiprobable),10), // Cara 10
+        new Apuesta(Tipo(Tijera,DistribucionPonderada),15)) // 0 15
+
+      val planificacion = Casino.planificar(racional,apuestas)
+
+      assert(planificacion.length == 1)
+      assert(planificacion.head.tipo.tipoApuesta == Cruz)
+    }
+
   }
 }
